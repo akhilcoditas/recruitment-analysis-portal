@@ -105,11 +105,16 @@
             <p class="mapping-intro">
               Select which columns in your spreadsheet correspond to each field:
             </p>
-            <div class="mapping-grid" id="mappingGrid">
-              <!-- Will be populated by JS -->
-            </div>
+            <div class="mapping-grid" id="mappingGrid"></div>
           </div>
           <div class="modal-footer">
+            <button
+              class="btn btn-danger"
+              id="resetMappingBtn"
+              style="margin-right: auto"
+            >
+              Reset Defaults
+            </button>
             <button class="btn btn-secondary" id="cancelMappingBtn">
               Cancel
             </button>
@@ -216,7 +221,7 @@
                 <div class="metric-icon">📅</div>
                 <div class="metric-content">
                   <span class="metric-value" id="interviewsScheduled">0</span>
-                  <span class="metric-label">Interviews Scheduled</span>
+                  <span class="metric-label">Interviews Done</span>
                 </div>
               </div>
               <div class="metric-card metric-green">
@@ -236,43 +241,85 @@
             </div>
           </section>
 
+          <!-- Screening Section -->
+          <section class="dashboard-section">
+            <h2 class="section-title">📋 Screening</h2>
+            <div class="metrics-grid metrics-6">
+              <div class="metric-card-small metric-blue">
+                <span class="metric-value-small" id="screeningPending">0</span>
+                <span class="metric-label-small">Pending</span>
+              </div>
+              <div class="metric-card-small metric-orange">
+                <span class="metric-value-small" id="screeningFeedbackPending"
+                  >0</span
+                >
+                <span class="metric-label-small">Feedback Pending</span>
+              </div>
+              <div class="metric-card-small metric-green">
+                <span class="metric-value-small" id="screeningSelected">0</span>
+                <span class="metric-label-small">Selected</span>
+              </div>
+              <div class="metric-card-small metric-red">
+                <span class="metric-value-small" id="screeningRejected">0</span>
+                <span class="metric-label-small">Rejected</span>
+              </div>
+              <div class="metric-card-small metric-purple">
+                <span class="metric-value-small" id="screeningHold">0</span>
+                <span class="metric-label-small">Hold</span>
+              </div>
+              <div class="metric-card-small metric-pink">
+                <span class="metric-value-small" id="screeningNoShow">0</span>
+                <span class="metric-label-small">No-Show</span>
+              </div>
+            </div>
+          </section>
+
           <!-- Interview Funnel -->
           <section class="dashboard-section">
-            <h2 class="section-title">🎯 Interview Funnel</h2>
+            <h2 class="section-title">🎯 Interview Funnel (Post Screening)</h2>
             <div class="funnel-container">
               <div class="funnel-stage">
-                <div class="funnel-bar" id="screeningBar">
-                  <span class="funnel-count" id="screenedCount">0</span>
-                </div>
-                <span class="funnel-label">Screened</span>
-              </div>
-              <div class="funnel-arrow">→</div>
-              <div class="funnel-stage">
-                <div class="funnel-bar" id="rapidFireBar">
-                  <span class="funnel-count" id="rapidFireCount">0</span>
+                <div class="funnel-bar">
+                  <span class="funnel-count" id="rfReachedCount">0</span>
+                  <span class="funnel-count-label">completed</span>
                 </div>
                 <span class="funnel-label">Rapid Fire</span>
+                <span class="funnel-pending" id="rfPendingLabel"
+                  >0 pending</span
+                >
               </div>
               <div class="funnel-arrow">→</div>
               <div class="funnel-stage">
-                <div class="funnel-bar" id="l1Bar">
-                  <span class="funnel-count" id="l1Count">0</span>
+                <div class="funnel-bar">
+                  <span class="funnel-count" id="l1ReachedCount">0</span>
+                  <span class="funnel-count-label">completed</span>
                 </div>
                 <span class="funnel-label">L1 Round</span>
+                <span class="funnel-pending" id="l1PendingLabel"
+                  >0 pending</span
+                >
               </div>
               <div class="funnel-arrow">→</div>
               <div class="funnel-stage">
-                <div class="funnel-bar" id="l2Bar">
-                  <span class="funnel-count" id="l2Count">0</span>
+                <div class="funnel-bar">
+                  <span class="funnel-count" id="l2ReachedCount">0</span>
+                  <span class="funnel-count-label">completed</span>
                 </div>
                 <span class="funnel-label">L2 Round</span>
+                <span class="funnel-pending" id="l2PendingLabel"
+                  >0 pending</span
+                >
               </div>
               <div class="funnel-arrow">→</div>
               <div class="funnel-stage">
-                <div class="funnel-bar" id="clientBar">
-                  <span class="funnel-count" id="clientCount">0</span>
+                <div class="funnel-bar">
+                  <span class="funnel-count" id="clientReachedCount">0</span>
+                  <span class="funnel-count-label">completed</span>
                 </div>
                 <span class="funnel-label">Client Round</span>
+                <span class="funnel-pending" id="clientPendingLabel"
+                  >0 pending</span
+                >
               </div>
             </div>
           </section>
@@ -281,76 +328,89 @@
           <section class="dashboard-section">
             <h2 class="section-title">📈 Stage Outcomes</h2>
             <div class="outcomes-grid">
-              <!-- Screening Outcome -->
+              <!-- Rapid Fire Outcome -->
               <div class="outcome-card">
-                <h3>Screening</h3>
+                <div class="outcome-header">
+                  <h3>Rapid Fire</h3>
+                  <span class="outcome-pending-badge" id="rfPendingBadge"
+                    >0 pending</span
+                  >
+                </div>
                 <div class="outcome-bars">
                   <div class="outcome-row">
-                    <span class="outcome-label">Selected</span>
+                    <span class="outcome-label">✅ Selected</span>
                     <div class="outcome-bar-container">
                       <div
                         class="outcome-bar outcome-success"
-                        id="screeningSelectedBar"
+                        id="rfSelectedBar"
                       ></div>
                     </div>
-                    <span class="outcome-value" id="screeningSelected">0</span>
+                    <span class="outcome-value" id="rfSelected">0</span>
                   </div>
                   <div class="outcome-row">
-                    <span class="outcome-label">Rejected</span>
+                    <span class="outcome-label">❌ Rejected</span>
                     <div class="outcome-bar-container">
                       <div
                         class="outcome-bar outcome-danger"
-                        id="screeningRejectedBar"
+                        id="rfRejectedBar"
                       ></div>
                     </div>
-                    <span class="outcome-value" id="screeningRejected">0</span>
+                    <span class="outcome-value" id="rfRejected">0</span>
                   </div>
                   <div class="outcome-row">
-                    <span class="outcome-label">Hold</span>
+                    <span class="outcome-label">🚫 Dropped</span>
+                    <div class="outcome-bar-container">
+                      <div
+                        class="outcome-bar outcome-muted"
+                        id="rfDroppedBar"
+                      ></div>
+                    </div>
+                    <span class="outcome-value" id="rfDropped">0</span>
+                  </div>
+                  <div class="outcome-row">
+                    <span class="outcome-label">📅 Rescheduled</span>
                     <div class="outcome-bar-container">
                       <div
                         class="outcome-bar outcome-warning"
-                        id="screeningHoldBar"
+                        id="rfRescheduleBar"
                       ></div>
                     </div>
-                    <span class="outcome-value" id="screeningHold">0</span>
-                  </div>
-                </div>
-              </div>
-
-              <!-- Rapid Fire Outcome -->
-              <div class="outcome-card">
-                <h3>Rapid Fire</h3>
-                <div class="outcome-bars">
-                  <div class="outcome-row">
-                    <span class="outcome-label">Passed</span>
-                    <div class="outcome-bar-container">
-                      <div
-                        class="outcome-bar outcome-success"
-                        id="rapidFirePassedBar"
-                      ></div>
-                    </div>
-                    <span class="outcome-value" id="rapidFirePassed">0</span>
+                    <span class="outcome-value" id="rfReschedule">0</span>
                   </div>
                   <div class="outcome-row">
-                    <span class="outcome-label">Rejected</span>
+                    <span class="outcome-label">⏳ To Be Rescheduled</span>
                     <div class="outcome-bar-container">
                       <div
-                        class="outcome-bar outcome-danger"
-                        id="rapidFireRejectedBar"
+                        class="outcome-bar outcome-info"
+                        id="rfToBeScheduledBar"
                       ></div>
                     </div>
-                    <span class="outcome-value" id="rapidFireRejected">0</span>
+                    <span class="outcome-value" id="rfToBeScheduled">0</span>
+                  </div>
+                  <div class="outcome-row">
+                    <span class="outcome-label">💬 Feedback Pending</span>
+                    <div class="outcome-bar-container">
+                      <div
+                        class="outcome-bar outcome-pending"
+                        id="rfFeedbackPendingBar"
+                      ></div>
+                    </div>
+                    <span class="outcome-value" id="rfFeedbackPending">0</span>
                   </div>
                 </div>
               </div>
 
               <!-- L1 Outcome -->
               <div class="outcome-card">
-                <h3>L1 Technical</h3>
+                <div class="outcome-header">
+                  <h3>L1 Technical</h3>
+                  <span class="outcome-pending-badge" id="l1PendingBadge"
+                    >0 pending</span
+                  >
+                </div>
                 <div class="outcome-bars">
                   <div class="outcome-row">
-                    <span class="outcome-label">Selected</span>
+                    <span class="outcome-label">✅ Selected</span>
                     <div class="outcome-bar-container">
                       <div
                         class="outcome-bar outcome-success"
@@ -360,7 +420,7 @@
                     <span class="outcome-value" id="l1Selected">0</span>
                   </div>
                   <div class="outcome-row">
-                    <span class="outcome-label">Rejected</span>
+                    <span class="outcome-label">❌ Rejected</span>
                     <div class="outcome-bar-container">
                       <div
                         class="outcome-bar outcome-danger"
@@ -369,15 +429,60 @@
                     </div>
                     <span class="outcome-value" id="l1Rejected">0</span>
                   </div>
+                  <div class="outcome-row">
+                    <span class="outcome-label">🚫 Dropped</span>
+                    <div class="outcome-bar-container">
+                      <div
+                        class="outcome-bar outcome-muted"
+                        id="l1DroppedBar"
+                      ></div>
+                    </div>
+                    <span class="outcome-value" id="l1Dropped">0</span>
+                  </div>
+                  <div class="outcome-row">
+                    <span class="outcome-label">📅 Rescheduled</span>
+                    <div class="outcome-bar-container">
+                      <div
+                        class="outcome-bar outcome-warning"
+                        id="l1RescheduleBar"
+                      ></div>
+                    </div>
+                    <span class="outcome-value" id="l1Reschedule">0</span>
+                  </div>
+                  <div class="outcome-row">
+                    <span class="outcome-label">⏳ To Be Rescheduled</span>
+                    <div class="outcome-bar-container">
+                      <div
+                        class="outcome-bar outcome-info"
+                        id="l1ToBeScheduledBar"
+                      ></div>
+                    </div>
+                    <span class="outcome-value" id="l1ToBeScheduled">0</span>
+                  </div>
+                  <div class="outcome-row">
+                    <span class="outcome-label">💬 Feedback Pending</span>
+                    <div class="outcome-bar-container">
+                      <div
+                        class="outcome-bar outcome-pending"
+                        id="l1FeedbackPendingBar"
+                      ></div>
+                    </div>
+                    <span class="outcome-value" id="l1FeedbackPending">0</span>
+                  </div>
                 </div>
               </div>
 
               <!-- L2 Outcome -->
               <div class="outcome-card">
-                <h3>L2 Technical</h3>
+                <div class="outcome-header">
+                  <h3>L2 Technical</h3>
+                  <span class="outcome-pending-badge" id="l2PendingBadge"
+                    >0 pending</span
+                  >
+                </div>
                 <div class="outcome-bars">
                   <div class="outcome-row">
-                    <span class="outcome-label">Selected</span>
+                    <span class="outcome-label">✅ Selected</span>
                     <div class="outcome-bar-container">
                       <div
                         class="outcome-bar outcome-success"
@@ -387,7 +492,7 @@
                     <span class="outcome-value" id="l2Selected">0</span>
                   </div>
                   <div class="outcome-row">
-                    <span class="outcome-label">Rejected</span>
+                    <span class="outcome-label">❌ Rejected</span>
                     <div class="outcome-bar-container">
                       <div
                         class="outcome-bar outcome-danger"
@@ -396,15 +501,60 @@
                     </div>
                     <span class="outcome-value" id="l2Rejected">0</span>
                   </div>
+                  <div class="outcome-row">
+                    <span class="outcome-label">🚫 Dropped</span>
+                    <div class="outcome-bar-container">
+                      <div
+                        class="outcome-bar outcome-muted"
+                        id="l2DroppedBar"
+                      ></div>
+                    </div>
+                    <span class="outcome-value" id="l2Dropped">0</span>
+                  </div>
+                  <div class="outcome-row">
+                    <span class="outcome-label">📅 Rescheduled</span>
+                    <div class="outcome-bar-container">
+                      <div
+                        class="outcome-bar outcome-warning"
+                        id="l2RescheduleBar"
+                      ></div>
+                    </div>
+                    <span class="outcome-value" id="l2Reschedule">0</span>
+                  </div>
+                  <div class="outcome-row">
+                    <span class="outcome-label">⏳ To Be Rescheduled</span>
+                    <div class="outcome-bar-container">
+                      <div
+                        class="outcome-bar outcome-info"
+                        id="l2ToBeScheduledBar"
+                      ></div>
+                    </div>
+                    <span class="outcome-value" id="l2ToBeScheduled">0</span>
+                  </div>
+                  <div class="outcome-row">
+                    <span class="outcome-label">💬 Feedback Pending</span>
+                    <div class="outcome-bar-container">
+                      <div
+                        class="outcome-bar outcome-pending"
+                        id="l2FeedbackPendingBar"
+                      ></div>
+                    </div>
+                    <span class="outcome-value" id="l2FeedbackPending">0</span>
+                  </div>
                 </div>
               </div>
 
               <!-- Client Round Outcome -->
               <div class="outcome-card">
-                <h3>Client Round</h3>
+                <div class="outcome-header">
+                  <h3>Client Round</h3>
+                  <span class="outcome-pending-badge" id="clientPendingBadge"
+                    >0 pending</span
+                  >
+                </div>
                 <div class="outcome-bars">
                   <div class="outcome-row">
-                    <span class="outcome-label">Selected</span>
+                    <span class="outcome-label">✅ Selected</span>
                     <div class="outcome-bar-container">
                       <div
                         class="outcome-bar outcome-success"
@@ -414,7 +564,7 @@
                     <span class="outcome-value" id="clientSelected">0</span>
                   </div>
                   <div class="outcome-row">
-                    <span class="outcome-label">Rejected</span>
+                    <span class="outcome-label">❌ Rejected</span>
                     <div class="outcome-bar-container">
                       <div
                         class="outcome-bar outcome-danger"
@@ -423,34 +573,50 @@
                     </div>
                     <span class="outcome-value" id="clientRejected">0</span>
                   </div>
-                </div>
-              </div>
-            </div>
-          </section>
-
-          <!-- Quality Metrics -->
-          <section class="dashboard-section">
-            <h2 class="section-title">🟥 Quality Metrics</h2>
-            <div class="metrics-grid metrics-3">
-              <div class="metric-card metric-red">
-                <div class="metric-icon">🚫</div>
-                <div class="metric-content">
-                  <span class="metric-value" id="noShowCount">0</span>
-                  <span class="metric-label">No Shows</span>
-                </div>
-              </div>
-              <div class="metric-card metric-orange">
-                <div class="metric-icon">❌</div>
-                <div class="metric-content">
-                  <span class="metric-value" id="technicalRejections">0</span>
-                  <span class="metric-label">Technical Rejections</span>
-                </div>
-              </div>
-              <div class="metric-card metric-pink">
-                <div class="metric-icon">👤</div>
-                <div class="metric-content">
-                  <span class="metric-value" id="hrRejections">0</span>
-                  <span class="metric-label">HR Rejections</span>
+                  <div class="outcome-row">
+                    <span class="outcome-label">🚫 Dropped</span>
+                    <div class="outcome-bar-container">
+                      <div
+                        class="outcome-bar outcome-muted"
+                        id="clientDroppedBar"
+                      ></div>
+                    </div>
+                    <span class="outcome-value" id="clientDropped">0</span>
+                  </div>
+                  <div class="outcome-row">
+                    <span class="outcome-label">📅 Rescheduled</span>
+                    <div class="outcome-bar-container">
+                      <div
+                        class="outcome-bar outcome-warning"
+                        id="clientRescheduleBar"
+                      ></div>
+                    </div>
+                    <span class="outcome-value" id="clientReschedule">0</span>
+                  </div>
+                  <div class="outcome-row">
+                    <span class="outcome-label">⏳ To Be Rescheduled</span>
+                    <div class="outcome-bar-container">
+                      <div
+                        class="outcome-bar outcome-info"
+                        id="clientToBeScheduledBar"
+                      ></div>
+                    </div>
+                    <span class="outcome-value" id="clientToBeScheduled"
+                      >0</span
+                    >
+                  </div>
+                  <div class="outcome-row">
+                    <span class="outcome-label">💬 Feedback Pending</span>
+                    <div class="outcome-bar-container">
+                      <div
+                        class="outcome-bar outcome-pending"
+                        id="clientFeedbackPendingBar"
+                      ></div>
+                    </div>
+                    <span class="outcome-value" id="clientFeedbackPending"
+                      >0</span
+                    >
+                  </div>
                 </div>
               </div>
             </div>
@@ -465,36 +631,41 @@
                   <tr>
                     <th>Vendor</th>
                     <th>Profiles</th>
-                    <th>Screened</th>
-                    <th>Selected</th>
-                    <th>Rejected</th>
-                    <th>Success Rate</th>
+                    <th>Screening</th>
+                    <th>RF</th>
+                    <th>L1</th>
+                    <th>L2</th>
+                    <th>Client</th>
+                    <th>Offers</th>
+                    <th>Joined</th>
                   </tr>
                 </thead>
-                <tbody id="vendorTableBody">
-                  <!-- Populated by JS -->
-                </tbody>
+                <tbody id="vendorTableBody"></tbody>
               </table>
+            </div>
+            <div class="table-legend">
+              <span class="legend-item"
+                ><span class="legend-dot success"></span> Selected</span
+              >
+              <span class="legend-item"
+                ><span class="legend-dot danger"></span> Rejected</span
+              >
+              <span class="legend-item"
+                ><span class="legend-dot warning"></span> Pending</span
+              >
             </div>
           </section>
 
           <!-- Technology & Experience Summary -->
           <section class="dashboard-section">
             <div class="summary-grid">
-              <!-- Technology Summary -->
               <div class="summary-card">
                 <h3>💻 Technology-wise Summary</h3>
-                <div class="summary-list" id="techSummary">
-                  <!-- Populated by JS -->
-                </div>
+                <div class="summary-list" id="techSummary"></div>
               </div>
-
-              <!-- Experience Summary -->
               <div class="summary-card">
                 <h3>📊 Experience Bracket</h3>
-                <div class="summary-list" id="expSummary">
-                  <!-- Populated by JS -->
-                </div>
+                <div class="summary-list" id="expSummary"></div>
               </div>
             </div>
           </section>

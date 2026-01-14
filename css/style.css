@@ -206,6 +206,17 @@ body::before {
   border-color: var(--border-hover);
 }
 
+.btn-danger {
+  background: var(--error-bg);
+  color: var(--error);
+  border: 1px solid var(--error);
+}
+
+.btn-danger:hover {
+  background: var(--error);
+  color: white;
+}
+
 .btn-refresh,
 .btn-settings {
   background: var(--bg-tertiary);
@@ -602,6 +613,10 @@ body::before {
   grid-template-columns: repeat(3, 1fr);
 }
 
+.metrics-6 {
+  grid-template-columns: repeat(6, 1fr);
+}
+
 .metric-card {
   background: var(--bg-secondary);
   border: 1px solid var(--border-color);
@@ -690,6 +705,54 @@ body::before {
   letter-spacing: 0.03em;
 }
 
+/* Small metric cards */
+.metric-card-small {
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  padding: 1rem;
+  text-align: center;
+  transition: all var(--transition-fast);
+}
+
+.metric-card-small:hover {
+  transform: translateY(-2px);
+  border-color: var(--border-hover);
+}
+
+.metric-value-small {
+  font-size: 1.5rem;
+  font-weight: 700;
+  display: block;
+  margin-bottom: 0.25rem;
+}
+
+.metric-label-small {
+  font-size: 0.7rem;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+}
+
+.metric-card-small.metric-blue .metric-value-small {
+  color: var(--blue);
+}
+.metric-card-small.metric-green .metric-value-small {
+  color: var(--success);
+}
+.metric-card-small.metric-red .metric-value-small {
+  color: var(--error);
+}
+.metric-card-small.metric-orange .metric-value-small {
+  color: var(--orange);
+}
+.metric-card-small.metric-purple .metric-value-small {
+  color: var(--purple);
+}
+.metric-card-small.metric-pink .metric-value-small {
+  color: var(--pink);
+}
+
 /* ========================================
    Funnel
    ======================================== */
@@ -710,10 +773,11 @@ body::before {
 }
 
 .funnel-bar {
-  height: 60px;
+  height: 70px;
   background: linear-gradient(135deg, var(--accent-primary), var(--purple));
   border-radius: var(--radius-md);
   display: flex;
+  flex-direction: column;
   align-items: center;
   justify-content: center;
   margin-bottom: 0.75rem;
@@ -730,11 +794,25 @@ body::before {
   color: white;
 }
 
+.funnel-count-label {
+  font-size: 0.65rem;
+  color: rgba(255, 255, 255, 0.7);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-top: 2px;
+}
+
 .funnel-label {
   font-size: 0.8rem;
   color: var(--text-secondary);
   text-transform: uppercase;
   letter-spacing: 0.03em;
+}
+
+.funnel-pending {
+  font-size: 0.7rem;
+  color: var(--blue);
+  margin-top: 0.25rem;
 }
 
 .funnel-arrow {
@@ -756,6 +834,30 @@ body::before {
   border: 1px solid var(--border-color);
   border-radius: var(--radius-lg);
   padding: 1.25rem;
+}
+
+.outcome-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem;
+}
+
+.outcome-header h3 {
+  font-size: 0.9rem;
+  font-weight: 600;
+  margin: 0;
+}
+
+.outcome-pending-badge {
+  background: rgba(99, 102, 241, 0.2);
+  color: var(--accent-primary);
+  font-size: 0.7rem;
+  font-weight: 600;
+  padding: 0.25rem 0.5rem;
+  border-radius: var(--radius-sm);
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
 }
 
 .outcome-card h3 {
@@ -806,6 +908,16 @@ body::before {
 .outcome-warning {
   background: var(--warning);
 }
+.outcome-muted {
+  background: #6b7280;
+}
+.outcome-info {
+  background: var(--blue);
+}
+
+.outcome-pending {
+  background: var(--purple);
+}
 
 .outcome-value {
   font-size: 0.9rem;
@@ -822,6 +934,101 @@ body::before {
   border: 1px solid var(--border-color);
   border-radius: var(--radius-lg);
   overflow: hidden;
+}
+
+.table-scroll {
+  overflow-x: auto;
+  max-width: 100%;
+}
+
+.header-group {
+  background: rgba(99, 102, 241, 0.15);
+  border-bottom: 2px solid var(--accent-primary);
+}
+
+.sticky-col {
+  position: sticky;
+  left: 0;
+  background: var(--bg-tertiary);
+  z-index: 1;
+}
+
+.text-success {
+  color: var(--success);
+}
+
+.text-danger {
+  color: var(--error);
+}
+
+.text-warning {
+  color: var(--warning);
+}
+
+/* Stage badges for vendor table */
+.stage-badge {
+  display: inline-block;
+  min-width: 20px;
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-align: center;
+}
+
+.stage-badge.success {
+  background: rgba(16, 185, 129, 0.2);
+  color: var(--success);
+}
+
+.stage-badge.danger {
+  background: rgba(239, 68, 68, 0.2);
+  color: var(--error);
+}
+
+.stage-badge.warning {
+  background: rgba(245, 158, 11, 0.2);
+  color: var(--warning);
+}
+
+.stage-badge.muted {
+  background: rgba(156, 163, 175, 0.1);
+  color: var(--text-muted);
+}
+
+/* Table legend */
+.table-legend {
+  display: flex;
+  gap: 1.5rem;
+  padding: 0.75rem 1rem;
+  background: var(--bg-tertiary);
+  border-top: 1px solid var(--border-color);
+  font-size: 0.75rem;
+  color: var(--text-secondary);
+}
+
+.legend-item {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.legend-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+}
+
+.legend-dot.success {
+  background: var(--success);
+}
+
+.legend-dot.danger {
+  background: var(--error);
+}
+
+.legend-dot.warning {
+  background: var(--warning);
 }
 
 .data-table {

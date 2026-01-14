@@ -20,6 +20,7 @@ document.addEventListener("DOMContentLoaded", () => {
     closeMappingModal: document.getElementById("closeMappingModal"),
     cancelMappingBtn: document.getElementById("cancelMappingBtn"),
     saveMappingBtn: document.getElementById("saveMappingBtn"),
+    resetMappingBtn: document.getElementById("resetMappingBtn"),
     mappingGrid: document.getElementById("mappingGrid"),
     mapColumnsBtn: document.getElementById("mapColumnsBtn"),
 
@@ -39,36 +40,73 @@ document.addEventListener("DOMContentLoaded", () => {
     retryBtn: document.getElementById("retryBtn"),
     errorMessage: document.getElementById("errorMessage"),
 
-    // Metrics
+    // Overview Metrics
     totalProfiles: document.getElementById("totalProfiles"),
     interviewsScheduled: document.getElementById("interviewsScheduled"),
     totalOffers: document.getElementById("totalOffers"),
     totalOnboarded: document.getElementById("totalOnboarded"),
 
-    // Funnel
-    screenedCount: document.getElementById("screenedCount"),
-    rapidFireCount: document.getElementById("rapidFireCount"),
-    l1Count: document.getElementById("l1Count"),
-    l2Count: document.getElementById("l2Count"),
-    clientCount: document.getElementById("clientCount"),
-
-    // Outcomes
+    // Screening
+    screeningPending: document.getElementById("screeningPending"),
+    screeningFeedbackPending: document.getElementById(
+      "screeningFeedbackPending"
+    ),
     screeningSelected: document.getElementById("screeningSelected"),
     screeningRejected: document.getElementById("screeningRejected"),
     screeningHold: document.getElementById("screeningHold"),
-    rapidFirePassed: document.getElementById("rapidFirePassed"),
-    rapidFireRejected: document.getElementById("rapidFireRejected"),
+    screeningNoShow: document.getElementById("screeningNoShow"),
+
+    // Funnel
+    rfReachedCount: document.getElementById("rfReachedCount"),
+    l1ReachedCount: document.getElementById("l1ReachedCount"),
+    l2ReachedCount: document.getElementById("l2ReachedCount"),
+    clientReachedCount: document.getElementById("clientReachedCount"),
+
+    // Funnel Pending Labels
+    rfPendingLabel: document.getElementById("rfPendingLabel"),
+    l1PendingLabel: document.getElementById("l1PendingLabel"),
+    l2PendingLabel: document.getElementById("l2PendingLabel"),
+    clientPendingLabel: document.getElementById("clientPendingLabel"),
+
+    // Outcome Pending Badges
+    rfPendingBadge: document.getElementById("rfPendingBadge"),
+    l1PendingBadge: document.getElementById("l1PendingBadge"),
+    l2PendingBadge: document.getElementById("l2PendingBadge"),
+    clientPendingBadge: document.getElementById("clientPendingBadge"),
+
+    // RF Outcomes
+    rfSelected: document.getElementById("rfSelected"),
+    rfRejected: document.getElementById("rfRejected"),
+    rfDropped: document.getElementById("rfDropped"),
+    rfReschedule: document.getElementById("rfReschedule"),
+    rfToBeScheduled: document.getElementById("rfToBeScheduled"),
+    rfFeedbackPending: document.getElementById("rfFeedbackPending"),
+
+    // L1 Outcomes
     l1Selected: document.getElementById("l1Selected"),
     l1Rejected: document.getElementById("l1Rejected"),
+    l1Dropped: document.getElementById("l1Dropped"),
+    l1Reschedule: document.getElementById("l1Reschedule"),
+    l1ToBeScheduled: document.getElementById("l1ToBeScheduled"),
+    l1FeedbackPending: document.getElementById("l1FeedbackPending"),
+
+    // L2 Outcomes
     l2Selected: document.getElementById("l2Selected"),
     l2Rejected: document.getElementById("l2Rejected"),
+    l2Dropped: document.getElementById("l2Dropped"),
+    l2Reschedule: document.getElementById("l2Reschedule"),
+    l2ToBeScheduled: document.getElementById("l2ToBeScheduled"),
+    l2FeedbackPending: document.getElementById("l2FeedbackPending"),
+
+    // Client Outcomes
     clientSelected: document.getElementById("clientSelected"),
     clientRejected: document.getElementById("clientRejected"),
+    clientDropped: document.getElementById("clientDropped"),
+    clientReschedule: document.getElementById("clientReschedule"),
+    clientToBeScheduled: document.getElementById("clientToBeScheduled"),
+    clientFeedbackPending: document.getElementById("clientFeedbackPending"),
 
     // Quality
-    noShowCount: document.getElementById("noShowCount"),
-    technicalRejections: document.getElementById("technicalRejections"),
-    hrRejections: document.getElementById("hrRejections"),
 
     // Tables
     vendorTableBody: document.getElementById("vendorTableBody"),
@@ -76,7 +114,6 @@ document.addEventListener("DOMContentLoaded", () => {
     expSummary: document.getElementById("expSummary"),
   };
 
-  // Current data state
   let currentData = null;
   let currentHeaders = null;
 
@@ -162,18 +199,17 @@ document.addEventListener("DOMContentLoaded", () => {
       { key: "technology", label: "Technology" },
       { key: "experience", label: "Experience (Years)" },
       { key: "screeningDone", label: "Screening Done (Yes/No)" },
-      { key: "screeningOutcome", label: "Screening Outcome" },
-      { key: "rapidFireDone", label: "Rapid Fire Done" },
-      { key: "rapidFireOutcome", label: "Rapid Fire Outcome" },
-      { key: "l1Scheduled", label: "L1 Scheduled" },
-      { key: "l1Outcome", label: "L1 Outcome" },
-      { key: "l2Scheduled", label: "L2 Scheduled" },
-      { key: "l2Outcome", label: "L2 Outcome" },
-      { key: "clientScheduled", label: "Client Round Scheduled" },
-      { key: "clientOutcome", label: "Client Round Outcome" },
+      {
+        key: "screeningFeedback",
+        label: "Screening Feedback (Select/Reject/Hold)",
+      },
+      { key: "rapidFire", label: "Rapid Fire (RF Select, RF Reject, etc.)" },
+      { key: "l1", label: "L1 Round (L1 Select, L1 Reject, etc.)" },
+      { key: "l2", label: "L2 Round (L2 Select, L2 Reject, etc.)" },
+      { key: "clientRound", label: "Client Round" },
       { key: "offerReleased", label: "Offer Released" },
       { key: "onboarded", label: "Onboarded" },
-      { key: "rejectionType", label: "Rejection Type" },
+      { key: "rejectionType", label: "Rejection Type (Technical/HR)" },
     ];
 
     elements.mappingGrid.innerHTML = fields
@@ -220,7 +256,6 @@ document.addEventListener("DOMContentLoaded", () => {
     Analytics.saveMappings(mappings);
     closeMappingModal();
 
-    // Recalculate with new mappings
     if (currentData) {
       displayDashboard(currentData, currentHeaders);
     }
@@ -268,64 +303,116 @@ document.addEventListener("DOMContentLoaded", () => {
     animateValue(elements.totalOffers, analytics.totalOffers);
     animateValue(elements.totalOnboarded, analytics.totalOnboarded);
 
-    // Funnel
-    animateValue(elements.screenedCount, analytics.screened);
-    animateValue(elements.rapidFireCount, analytics.rapidFireDone);
-    animateValue(elements.l1Count, analytics.l1Scheduled);
-    animateValue(elements.l2Count, analytics.l2Scheduled);
-    animateValue(elements.clientCount, analytics.clientScheduled);
-
-    // Screening outcomes
-    const screeningTotal =
-      analytics.screeningSelected +
-        analytics.screeningRejected +
-        analytics.screeningHold || 1;
-    updateOutcomeBar(
-      "screeningSelected",
-      analytics.screeningSelected,
-      screeningTotal
+    // Screening breakdown
+    animateValue(elements.screeningPending, analytics.screeningPending);
+    animateValue(
+      elements.screeningFeedbackPending,
+      analytics.screeningFeedbackPending
     );
-    updateOutcomeBar(
-      "screeningRejected",
-      analytics.screeningRejected,
-      screeningTotal
-    );
-    updateOutcomeBar("screeningHold", analytics.screeningHold, screeningTotal);
+    animateValue(elements.screeningSelected, analytics.screeningSelected);
+    animateValue(elements.screeningRejected, analytics.screeningRejected);
+    animateValue(elements.screeningHold, analytics.screeningHold);
+    animateValue(elements.screeningNoShow, analytics.screeningNoShow);
 
-    // Rapid Fire outcomes
+    // Funnel - reached counts
+    animateValue(elements.rfReachedCount, analytics.rfReached);
+    animateValue(elements.l1ReachedCount, analytics.l1Reached);
+    animateValue(elements.l2ReachedCount, analytics.l2Reached);
+    animateValue(elements.clientReachedCount, analytics.clientReached);
+
+    // Funnel - pending labels
+    elements.rfPendingLabel.textContent = `${analytics.rfPending} pending`;
+    elements.l1PendingLabel.textContent = `${analytics.l1Pending} pending`;
+    elements.l2PendingLabel.textContent = `${analytics.l2Pending} pending`;
+
+    // Outcome cards - pending badges
+    if (elements.rfPendingBadge)
+      elements.rfPendingBadge.textContent = `${analytics.rfPending} pending`;
+    if (elements.l1PendingBadge)
+      elements.l1PendingBadge.textContent = `${analytics.l1Pending} pending`;
+    if (elements.l2PendingBadge)
+      elements.l2PendingBadge.textContent = `${analytics.l2Pending} pending`;
+    if (elements.clientPendingBadge)
+      elements.clientPendingBadge.textContent = `${analytics.clientPending} pending`;
+    elements.clientPendingLabel.textContent = `${analytics.clientPending} pending`;
+
+    // === RF Outcomes ===
     const rfTotal =
-      analytics.rapidFirePassed + analytics.rapidFireRejected || 1;
-    updateOutcomeBar("rapidFirePassed", analytics.rapidFirePassed, rfTotal);
-    updateOutcomeBar("rapidFireRejected", analytics.rapidFireRejected, rfTotal);
+      analytics.rfSelected +
+        analytics.rfRejected +
+        analytics.rfDropped +
+        analytics.rfReschedule +
+        analytics.rfToBeScheduled +
+        analytics.rfFeedbackPending || 1;
+    updateOutcomeBar("rfSelected", analytics.rfSelected, rfTotal);
+    updateOutcomeBar("rfRejected", analytics.rfRejected, rfTotal);
+    updateOutcomeBar("rfDropped", analytics.rfDropped, rfTotal);
+    updateOutcomeBar("rfReschedule", analytics.rfReschedule, rfTotal);
+    updateOutcomeBar("rfToBeScheduled", analytics.rfToBeScheduled, rfTotal);
+    updateOutcomeBar("rfFeedbackPending", analytics.rfFeedbackPending, rfTotal);
 
-    // L1 outcomes
-    const l1Total = analytics.l1Selected + analytics.l1Rejected || 1;
+    // === L1 Outcomes ===
+    const l1Total =
+      analytics.l1Selected +
+        analytics.l1Rejected +
+        analytics.l1Dropped +
+        analytics.l1Reschedule +
+        analytics.l1ToBeScheduled +
+        analytics.l1FeedbackPending || 1;
     updateOutcomeBar("l1Selected", analytics.l1Selected, l1Total);
     updateOutcomeBar("l1Rejected", analytics.l1Rejected, l1Total);
+    updateOutcomeBar("l1Dropped", analytics.l1Dropped, l1Total);
+    updateOutcomeBar("l1Reschedule", analytics.l1Reschedule, l1Total);
+    updateOutcomeBar("l1ToBeScheduled", analytics.l1ToBeScheduled, l1Total);
+    updateOutcomeBar("l1FeedbackPending", analytics.l1FeedbackPending, l1Total);
 
-    // L2 outcomes
-    const l2Total = analytics.l2Selected + analytics.l2Rejected || 1;
+    // === L2 Outcomes ===
+    const l2Total =
+      analytics.l2Selected +
+        analytics.l2Rejected +
+        analytics.l2Dropped +
+        analytics.l2Reschedule +
+        analytics.l2ToBeScheduled +
+        analytics.l2FeedbackPending || 1;
     updateOutcomeBar("l2Selected", analytics.l2Selected, l2Total);
     updateOutcomeBar("l2Rejected", analytics.l2Rejected, l2Total);
+    updateOutcomeBar("l2Dropped", analytics.l2Dropped, l2Total);
+    updateOutcomeBar("l2Reschedule", analytics.l2Reschedule, l2Total);
+    updateOutcomeBar("l2ToBeScheduled", analytics.l2ToBeScheduled, l2Total);
+    updateOutcomeBar("l2FeedbackPending", analytics.l2FeedbackPending, l2Total);
 
-    // Client outcomes
+    // === Client Outcomes ===
     const clientTotal =
-      analytics.clientSelected + analytics.clientRejected || 1;
+      analytics.clientSelected +
+        analytics.clientRejected +
+        analytics.clientDropped +
+        analytics.clientReschedule +
+        analytics.clientToBeScheduled +
+        analytics.clientFeedbackPending || 1;
     updateOutcomeBar("clientSelected", analytics.clientSelected, clientTotal);
     updateOutcomeBar("clientRejected", analytics.clientRejected, clientTotal);
+    updateOutcomeBar("clientDropped", analytics.clientDropped, clientTotal);
+    updateOutcomeBar(
+      "clientReschedule",
+      analytics.clientReschedule,
+      clientTotal
+    );
+    updateOutcomeBar(
+      "clientToBeScheduled",
+      analytics.clientToBeScheduled,
+      clientTotal
+    );
+    updateOutcomeBar(
+      "clientFeedbackPending",
+      analytics.clientFeedbackPending,
+      clientTotal
+    );
 
     // Quality metrics
-    animateValue(elements.noShowCount, analytics.noShows);
-    animateValue(elements.technicalRejections, analytics.technicalRejections);
-    animateValue(elements.hrRejections, analytics.hrRejections);
 
-    // Vendor table
+    // Tables
     displayVendorTable(analytics.vendorSummary);
-
-    // Tech summary
     displayTechSummary(analytics.techSummary);
-
-    // Experience summary
     displayExpSummary(analytics.expSummary);
   }
 
@@ -347,23 +434,60 @@ document.addEventListener("DOMContentLoaded", () => {
       (a, b) => b[1].profiles - a[1].profiles
     );
 
+    if (vendors.length === 0) {
+      elements.vendorTableBody.innerHTML = `
+        <tr><td colspan="9" style="text-align: center; color: var(--text-muted);">No vendor data available</td></tr>
+      `;
+      return;
+    }
+
+    // Helper to create stage cell with colored badges
+    function stageCell(selected, rejected, pending) {
+      const parts = [];
+      if (selected > 0)
+        parts.push(`<span class="stage-badge success">${selected}</span>`);
+      if (rejected > 0)
+        parts.push(`<span class="stage-badge danger">${rejected}</span>`);
+      if (pending > 0)
+        parts.push(`<span class="stage-badge warning">${pending}</span>`);
+      return parts.length > 0
+        ? parts.join(" ")
+        : '<span class="stage-badge muted">-</span>';
+    }
+
     elements.vendorTableBody.innerHTML = vendors
       .map(([vendor, stats]) => {
-        const successRate =
-          stats.screened > 0
-            ? Math.round((stats.selected / stats.screened) * 100)
-            : 0;
-        const rateClass =
-          successRate >= 50 ? "high" : successRate >= 25 ? "medium" : "low";
-
         return `
         <tr>
-          <td>${escapeHtml(vendor)}</td>
+          <td><strong>${escapeHtml(vendor)}</strong></td>
           <td>${stats.profiles}</td>
-          <td>${stats.screened}</td>
-          <td>${stats.selected}</td>
-          <td>${stats.rejected}</td>
-          <td><span class="success-rate ${rateClass}">${successRate}%</span></td>
+          <td>${stageCell(
+            stats.screeningSelected,
+            stats.screeningRejected,
+            stats.screeningPending + stats.screeningHold
+          )}</td>
+          <td>${stageCell(
+            stats.rfSelected,
+            stats.rfRejected,
+            stats.rfPending
+          )}</td>
+          <td>${stageCell(
+            stats.l1Selected,
+            stats.l1Rejected,
+            stats.l1Pending
+          )}</td>
+          <td>${stageCell(
+            stats.l2Selected,
+            stats.l2Rejected,
+            stats.l2Pending
+          )}</td>
+          <td>${stageCell(
+            stats.clientSelected,
+            stats.clientRejected,
+            stats.clientPending
+          )}</td>
+          <td><strong>${stats.offers}</strong></td>
+          <td><strong>${stats.onboarded}</strong></td>
         </tr>
       `;
       })
@@ -374,6 +498,11 @@ document.addEventListener("DOMContentLoaded", () => {
     const techs = Object.entries(techSummary).sort(
       (a, b) => b[1].profiles - a[1].profiles
     );
+
+    if (techs.length === 0) {
+      elements.techSummary.innerHTML = `<div class="summary-item"><span class="summary-item-name">No data</span></div>`;
+      return;
+    }
 
     elements.techSummary.innerHTML = techs
       .map(
@@ -418,6 +547,8 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   function animateValue(element, targetValue) {
+    if (!element) return;
+
     const duration = 500;
     const startValue = parseInt(element.textContent) || 0;
     const startTime = performance.now();
@@ -425,7 +556,6 @@ document.addEventListener("DOMContentLoaded", () => {
     function update(currentTime) {
       const elapsed = currentTime - startTime;
       const progress = Math.min(elapsed / duration, 1);
-
       const easeOut = 1 - Math.pow(1 - progress, 3);
       const currentValue = Math.round(
         startValue + (targetValue - startValue) * easeOut
@@ -445,16 +575,13 @@ document.addEventListener("DOMContentLoaded", () => {
   // Event Listeners
   // ========================================
 
-  // Settings modal
   elements.settingsBtn.addEventListener("click", openSettingsModal);
   elements.connectBtn.addEventListener("click", openSettingsModal);
   elements.closeModal.addEventListener("click", closeSettingsModal);
   elements.cancelBtn.addEventListener("click", closeSettingsModal);
 
   elements.settingsModal.addEventListener("click", (e) => {
-    if (e.target === elements.settingsModal) {
-      closeSettingsModal();
-    }
+    if (e.target === elements.settingsModal) closeSettingsModal();
   });
 
   elements.saveBtn.addEventListener("click", async () => {
@@ -476,23 +603,27 @@ document.addEventListener("DOMContentLoaded", () => {
 
     CONFIG.save({ webAppUrl });
     closeSettingsModal();
-
     await fetchAndDisplayData();
   });
 
-  // Mapping modal
   elements.mapColumnsBtn.addEventListener("click", openMappingModal);
   elements.closeMappingModal.addEventListener("click", closeMappingModal);
   elements.cancelMappingBtn.addEventListener("click", closeMappingModal);
   elements.saveMappingBtn.addEventListener("click", saveMappings);
-
-  elements.mappingModal.addEventListener("click", (e) => {
-    if (e.target === elements.mappingModal) {
+  elements.resetMappingBtn.addEventListener("click", () => {
+    if (confirm("Reset all column mappings to defaults?")) {
+      localStorage.removeItem("columnMappings");
       closeMappingModal();
+      if (currentData) {
+        displayDashboard(currentData, currentHeaders);
+      }
     }
   });
 
-  // Refresh
+  elements.mappingModal.addEventListener("click", (e) => {
+    if (e.target === elements.mappingModal) closeMappingModal();
+  });
+
   elements.refreshBtn.addEventListener("click", () => {
     if (CONFIG.isConfigured()) {
       fetchAndDisplayData();
@@ -501,25 +632,19 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   });
 
-  // Retry
   elements.retryBtn.addEventListener("click", fetchAndDisplayData);
 
-  // Keyboard shortcuts
   document.addEventListener("keydown", (e) => {
     if (e.key === "Escape") {
-      if (elements.settingsModal.classList.contains("active")) {
+      if (elements.settingsModal.classList.contains("active"))
         closeSettingsModal();
-      }
-      if (elements.mappingModal.classList.contains("active")) {
+      if (elements.mappingModal.classList.contains("active"))
         closeMappingModal();
-      }
     }
 
     if ((e.ctrlKey || e.metaKey) && e.key === "r") {
       e.preventDefault();
-      if (CONFIG.isConfigured()) {
-        fetchAndDisplayData();
-      }
+      if (CONFIG.isConfigured()) fetchAndDisplayData();
     }
   });
 
