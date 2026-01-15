@@ -419,6 +419,12 @@ const Analytics = {
       clientPending: 0,
       offerPending: 0,
 
+      // Pending candidates list (for detail view)
+      rfPendingList: [],
+      l1PendingList: [],
+      l2PendingList: [],
+      clientPendingList: [],
+
       // RF outcomes
       rfSelected: 0,
       rfRejected: 0,
@@ -525,11 +531,41 @@ const Analytics = {
           offerValue
         );
 
-        if (pendingStage === "rf") results.rfPending++;
-        else if (pendingStage === "l1") results.l1Pending++;
-        else if (pendingStage === "l2") results.l2Pending++;
-        else if (pendingStage === "client") results.clientPending++;
-        else if (pendingStage === "offer") results.offerPending++;
+        // Capture candidate info for pending lists
+        const baseCandidateInfo = {
+          name: this.getValue(row, "CANDIDATE") || "Unknown",
+          vendor: this.getValue(row, mappings.vendor) || "Unknown",
+          technology: this.getValue(row, mappings.technology) || "Other",
+          experience: this.getValue(row, mappings.experience) || "-",
+        };
+
+        if (pendingStage === "rf") {
+          results.rfPending++;
+          results.rfPendingList.push({
+            ...baseCandidateInfo,
+            status: "Awaiting RF",
+          });
+        } else if (pendingStage === "l1") {
+          results.l1Pending++;
+          results.l1PendingList.push({
+            ...baseCandidateInfo,
+            status: "Awaiting L1",
+          });
+        } else if (pendingStage === "l2") {
+          results.l2Pending++;
+          results.l2PendingList.push({
+            ...baseCandidateInfo,
+            status: "Awaiting L2",
+          });
+        } else if (pendingStage === "client") {
+          results.clientPending++;
+          results.clientPendingList.push({
+            ...baseCandidateInfo,
+            status: "Awaiting Client",
+          });
+        } else if (pendingStage === "offer") {
+          results.offerPending++;
+        }
 
         // Count RF outcomes
         const rfResult = this.parseStageOutcome(rfValue);
@@ -628,9 +664,17 @@ const Analytics = {
           l2Pending: 0,
           l2Selected: 0,
           l2Rejected: 0,
+          l2Reschedule: 0,
+          l2ToBeRescheduled: 0,
           clientPending: 0,
           clientSelected: 0,
           clientRejected: 0,
+          clientReschedule: 0,
+          clientToBeRescheduled: 0,
+          rfReschedule: 0,
+          rfToBeRescheduled: 0,
+          l1Reschedule: 0,
+          l1ToBeRescheduled: 0,
           offers: 0,
           onboarded: 0,
         };
@@ -664,42 +708,79 @@ const Analytics = {
         const vendorRfResult = this.parseStageOutcome(rfValue);
         if (vendorRfResult.isSelect) vendorData.rfSelected++;
         if (vendorRfResult.isReject) vendorData.rfRejected++;
+        if (vendorRfResult.isReschedule) vendorData.rfReschedule++;
+        if (vendorRfResult.isToBeScheduled) vendorData.rfToBeRescheduled++;
 
         const vendorL1Result = this.parseStageOutcome(l1Value);
         if (vendorL1Result.isSelect) vendorData.l1Selected++;
         if (vendorL1Result.isReject) vendorData.l1Rejected++;
+        if (vendorL1Result.isReschedule) vendorData.l1Reschedule++;
+        if (vendorL1Result.isToBeScheduled) vendorData.l1ToBeRescheduled++;
 
         const vendorL2Result = this.parseStageOutcome(l2Value);
         if (vendorL2Result.isSelect) vendorData.l2Selected++;
         if (vendorL2Result.isReject) vendorData.l2Rejected++;
+        if (vendorL2Result.isReschedule) vendorData.l2Reschedule++;
+        if (vendorL2Result.isToBeScheduled) vendorData.l2ToBeRescheduled++;
 
         const vendorClientResult = this.parseStageOutcome(clientValue);
         if (vendorClientResult.isSelect) vendorData.clientSelected++;
         if (vendorClientResult.isReject) vendorData.clientRejected++;
+        if (vendorClientResult.isReschedule) vendorData.clientReschedule++;
+        if (vendorClientResult.isToBeScheduled)
+          vendorData.clientToBeRescheduled++;
       }
 
       // Offers and onboarded per vendor
       if (this.isYes(offerValue)) vendorData.offers++;
       if (this.isYes(onboardedValue)) vendorData.onboarded++;
 
-      // === TECHNOLOGY SUMMARY ===
+      // === TECHNOLOGY SUMMARY (Enhanced) ===
       const tech = this.getValue(row, mappings.technology) || "Other";
-      if (!results.techSummary[tech]) {
-        results.techSummary[tech] = { profiles: 0, selected: 0 };
-      }
-      results.techSummary[tech].profiles++;
-      if (this.isYes(offerValue)) {
-        results.techSummary[tech].selected++;
-      }
-
-      // === EXPERIENCE SUMMARY ===
       const expValue = this.getValue(row, mappings.experience);
       const exp = this.parseExperience(expValue);
+
+      if (!results.techSummary[tech]) {
+        results.techSummary[tech] = {
+          profiles: 0,
+          screened: 0,
+          offers: 0,
+          onboarded: 0,
+          totalExp: 0,
+          expCount: 0,
+        };
+      }
+      results.techSummary[tech].profiles++;
+      if (this.isSelect(screeningFeedback)) {
+        results.techSummary[tech].screened++;
+      }
+      if (this.isYes(offerValue)) {
+        results.techSummary[tech].offers++;
+      }
+      if (this.isYes(onboardedValue)) {
+        results.techSummary[tech].onboarded++;
+      }
+      if (exp > 0) {
+        results.techSummary[tech].totalExp += exp;
+        results.techSummary[tech].expCount++;
+      }
+
+      // === EXPERIENCE SUMMARY (Enhanced) ===
       const expBracket = this.getExperienceBracket(exp);
       if (!results.expSummary[expBracket]) {
-        results.expSummary[expBracket] = 0;
+        results.expSummary[expBracket] = {
+          count: 0,
+          screened: 0,
+          offers: 0,
+        };
       }
-      results.expSummary[expBracket]++;
+      results.expSummary[expBracket].count++;
+      if (this.isSelect(screeningFeedback)) {
+        results.expSummary[expBracket].screened++;
+      }
+      if (this.isYes(offerValue)) {
+        results.expSummary[expBracket].offers++;
+      }
     });
 
     return results;

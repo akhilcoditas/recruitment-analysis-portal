@@ -125,6 +125,46 @@
         </div>
       </div>
 
+      <!-- Pending Detail Modal -->
+      <div class="modal-overlay" id="pendingDetailModal">
+        <div class="modal modal-fullpage">
+          <div class="modal-header">
+            <h2 id="pendingModalTitle">Pending Candidates</h2>
+            <button class="modal-close" id="closePendingModal">&times;</button>
+          </div>
+          <div class="modal-body">
+            <div class="pending-filters">
+              <div class="filter-group search-group">
+                <input
+                  type="text"
+                  id="searchInput"
+                  class="filter-search"
+                  placeholder="🔍 Search name or vendor..."
+                />
+              </div>
+              <div class="filter-group">
+                <label>Technology:</label>
+                <select id="filterTech" class="filter-select">
+                  <option value="">All Technologies</option>
+                </select>
+              </div>
+              <div class="filter-group">
+                <label>Vendor:</label>
+                <select id="filterVendor" class="filter-select">
+                  <option value="">All Vendors</option>
+                </select>
+              </div>
+              <div class="filter-stats">
+                <span id="filteredCount">0</span> candidates
+              </div>
+            </div>
+            <div class="pending-content">
+              <div class="pending-grouped" id="pendingGroupedView"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
       <!-- Main Content -->
       <main class="main-content">
         <!-- Status Bar -->
@@ -625,12 +665,37 @@
           <!-- Vendor Performance -->
           <section class="dashboard-section">
             <h2 class="section-title">👥 Vendor Performance</h2>
+            <div class="table-legend table-legend-top">
+              <span class="legend-title">Legend:</span>
+              <span class="legend-item">
+                <span class="legend-dot success"></span> Selected
+              </span>
+              <span class="legend-item">
+                <span class="legend-dot danger"></span> Rejected
+              </span>
+              <span class="legend-item">
+                <span class="legend-dot warning"></span> Pending
+              </span>
+              <span class="legend-item">
+                <span class="legend-dot hold"></span> On Hold
+              </span>
+              <span class="legend-item">
+                <span class="legend-dot info"></span> Rescheduled
+              </span>
+              <span class="legend-item">
+                <span class="legend-dot purple"></span> To Be Rescheduled
+              </span>
+            </div>
             <div class="table-container">
               <table class="data-table" id="vendorTable">
                 <thead>
                   <tr>
-                    <th>Vendor</th>
-                    <th>Profiles</th>
+                    <th class="sortable" data-sort="vendor">
+                      Vendor <span class="sort-icon">↕</span>
+                    </th>
+                    <th class="sortable" data-sort="profiles">
+                      Profiles <span class="sort-icon">↕</span>
+                    </th>
                     <th>Screening</th>
                     <th>RF</th>
                     <th>L1</th>
@@ -638,34 +703,62 @@
                     <th>Client</th>
                     <th>Offers</th>
                     <th>Joined</th>
+                    <th
+                      class="sortable"
+                      data-sort="successRate"
+                      title="Formula: (Screening Selected ÷ Profiles) × 100"
+                    >
+                      Success % <span class="info-icon">ⓘ</span>
+                      <span class="sort-icon">↕</span>
+                    </th>
                   </tr>
                 </thead>
                 <tbody id="vendorTableBody"></tbody>
               </table>
             </div>
-            <div class="table-legend">
-              <span class="legend-item"
-                ><span class="legend-dot success"></span> Selected</span
-              >
-              <span class="legend-item"
-                ><span class="legend-dot danger"></span> Rejected</span
-              >
-              <span class="legend-item"
-                ><span class="legend-dot warning"></span> Pending</span
-              >
-            </div>
           </section>
 
-          <!-- Technology & Experience Summary -->
+          <!-- Technology & Experience Insights -->
           <section class="dashboard-section">
-            <div class="summary-grid">
-              <div class="summary-card">
-                <h3>💻 Technology-wise Summary</h3>
-                <div class="summary-list" id="techSummary"></div>
+            <h2 class="section-title">📊 Hiring Insights</h2>
+            <div class="insights-grid">
+              <!-- Technology Performance -->
+              <div class="insights-card insights-card-wide">
+                <h3>Technology Performance</h3>
+                <div class="table-container compact">
+                  <table class="data-table" id="techTable">
+                    <thead>
+                      <tr>
+                        <th class="sortable-tech" data-sort="tech">
+                          Technology <span class="sort-icon">↕</span>
+                        </th>
+                        <th class="sortable-tech" data-sort="profiles">
+                          Profiles <span class="sort-icon">↕</span>
+                        </th>
+                        <th>Screened</th>
+                        <th class="sortable-tech" data-sort="offers">
+                          Offers <span class="sort-icon">↕</span>
+                        </th>
+                        <th
+                          class="sortable-tech"
+                          data-sort="rate"
+                          title="Formula: (Screened ÷ Profiles) × 100"
+                        >
+                          Success % <span class="info-icon">ⓘ</span>
+                          <span class="sort-icon">↕</span>
+                        </th>
+                        <th>Avg Exp</th>
+                      </tr>
+                    </thead>
+                    <tbody id="techTableBody"></tbody>
+                  </table>
+                </div>
               </div>
-              <div class="summary-card">
-                <h3>📊 Experience Bracket</h3>
-                <div class="summary-list" id="expSummary"></div>
+
+              <!-- Experience Distribution -->
+              <div class="insights-card">
+                <h3>Experience Distribution</h3>
+                <div class="exp-distribution" id="expDistribution"></div>
               </div>
             </div>
           </section>

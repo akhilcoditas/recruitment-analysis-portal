@@ -110,8 +110,6 @@ document.addEventListener("DOMContentLoaded", () => {
 
     // Tables
     vendorTableBody: document.getElementById("vendorTableBody"),
-    techSummary: document.getElementById("techSummary"),
-    expSummary: document.getElementById("expSummary"),
   };
 
   let currentData = null;
@@ -429,34 +427,121 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   }
 
-  function displayVendorTable(vendorSummary) {
-    const vendors = Object.entries(vendorSummary).sort(
-      (a, b) => b[1].profiles - a[1].profiles
+  // Vendor table sorting state
+  let vendorSortKey = "profiles";
+  let vendorSortAsc = false;
+  let currentVendorSummary = null;
+
+  function displayVendorTable(
+    vendorSummary,
+    sortKey = vendorSortKey,
+    sortAsc = vendorSortAsc
+  ) {
+    currentVendorSummary = vendorSummary;
+    vendorSortKey = sortKey;
+    vendorSortAsc = sortAsc;
+
+    // Calculate success rate for each vendor
+    const vendorsWithRate = Object.entries(vendorSummary).map(
+      ([vendor, stats]) => {
+        // Success rate = (screening selected / profiles) * 100
+        const successRate =
+          stats.profiles > 0
+            ? Math.round((stats.screeningSelected / stats.profiles) * 100)
+            : 0;
+        return [vendor, { ...stats, successRate }];
+      }
     );
+
+    // Sort vendors
+    const vendors = vendorsWithRate.sort((a, b) => {
+      let valA, valB;
+      if (sortKey === "vendor") {
+        valA = a[0].toLowerCase();
+        valB = b[0].toLowerCase();
+        return sortAsc ? valA.localeCompare(valB) : valB.localeCompare(valA);
+      } else if (sortKey === "profiles") {
+        valA = a[1].profiles;
+        valB = b[1].profiles;
+      } else if (sortKey === "successRate") {
+        valA = a[1].successRate;
+        valB = b[1].successRate;
+      } else {
+        valA = a[1].profiles;
+        valB = b[1].profiles;
+      }
+      return sortAsc ? valA - valB : valB - valA;
+    });
 
     if (vendors.length === 0) {
       elements.vendorTableBody.innerHTML = `
-        <tr><td colspan="9" style="text-align: center; color: var(--text-muted);">No vendor data available</td></tr>
+        <tr><td colspan="10" style="text-align: center; color: var(--text-muted);">No vendor data available</td></tr>
       `;
       return;
     }
 
+    // Update sort icons
+    document.querySelectorAll("#vendorTable th.sortable").forEach((th) => {
+      const icon = th.querySelector(".sort-icon");
+      if (th.dataset.sort === sortKey) {
+        icon.textContent = sortAsc ? "↑" : "↓";
+        th.classList.add("sorted");
+      } else {
+        icon.textContent = "↕";
+        th.classList.remove("sorted");
+      }
+    });
+
     // Helper to create stage cell with colored badges
-    function stageCell(selected, rejected, pending) {
+    function stageCell(
+      selected,
+      rejected,
+      pending,
+      hold = 0,
+      rescheduled = 0,
+      toBeRescheduled = 0
+    ) {
       const parts = [];
       if (selected > 0)
-        parts.push(`<span class="stage-badge success">${selected}</span>`);
+        parts.push(
+          `<span class="stage-badge success" title="Selected">${selected}</span>`
+        );
       if (rejected > 0)
-        parts.push(`<span class="stage-badge danger">${rejected}</span>`);
+        parts.push(
+          `<span class="stage-badge danger" title="Rejected">${rejected}</span>`
+        );
       if (pending > 0)
-        parts.push(`<span class="stage-badge warning">${pending}</span>`);
+        parts.push(
+          `<span class="stage-badge warning" title="Pending">${pending}</span>`
+        );
+      if (hold > 0)
+        parts.push(
+          `<span class="stage-badge hold" title="On Hold">${hold}</span>`
+        );
+      if (rescheduled > 0)
+        parts.push(
+          `<span class="stage-badge info" title="Rescheduled">${rescheduled}</span>`
+        );
+      if (toBeRescheduled > 0)
+        parts.push(
+          `<span class="stage-badge purple" title="To Be Rescheduled">${toBeRescheduled}</span>`
+        );
       return parts.length > 0
         ? parts.join(" ")
         : '<span class="stage-badge muted">-</span>';
     }
 
+    // Helper to get success rate badge color
+    function getSuccessRateClass(rate) {
+      if (rate >= 20) return "success";
+      if (rate >= 10) return "warning";
+      if (rate > 0) return "danger";
+      return "muted";
+    }
+
     elements.vendorTableBody.innerHTML = vendors
       .map(([vendor, stats]) => {
+        const rateClass = getSuccessRateClass(stats.successRate);
         return `
         <tr>
           <td><strong>${escapeHtml(vendor)}</strong></td>
@@ -464,75 +549,223 @@ document.addEventListener("DOMContentLoaded", () => {
           <td>${stageCell(
             stats.screeningSelected,
             stats.screeningRejected,
-            stats.screeningPending + stats.screeningHold
+            stats.screeningPending,
+            stats.screeningHold
           )}</td>
           <td>${stageCell(
             stats.rfSelected,
             stats.rfRejected,
-            stats.rfPending
+            stats.rfPending,
+            0,
+            stats.rfReschedule || 0,
+            stats.rfToBeRescheduled || 0
           )}</td>
           <td>${stageCell(
             stats.l1Selected,
             stats.l1Rejected,
-            stats.l1Pending
+            stats.l1Pending,
+            0,
+            stats.l1Reschedule || 0,
+            stats.l1ToBeRescheduled || 0
           )}</td>
           <td>${stageCell(
             stats.l2Selected,
             stats.l2Rejected,
-            stats.l2Pending
+            stats.l2Pending,
+            0,
+            stats.l2Reschedule || 0,
+            stats.l2ToBeRescheduled || 0
           )}</td>
           <td>${stageCell(
             stats.clientSelected,
             stats.clientRejected,
-            stats.clientPending
+            stats.clientPending,
+            0,
+            stats.clientReschedule || 0,
+            stats.clientToBeRescheduled || 0
           )}</td>
           <td><strong>${stats.offers}</strong></td>
           <td><strong>${stats.onboarded}</strong></td>
+          <td><span class="stage-badge ${rateClass}">${
+          stats.successRate
+        }%</span></td>
         </tr>
       `;
       })
       .join("");
   }
 
-  function displayTechSummary(techSummary) {
-    const techs = Object.entries(techSummary).sort(
-      (a, b) => b[1].profiles - a[1].profiles
+  // Vendor table sorting click handler
+  document.querySelectorAll("#vendorTable th.sortable").forEach((th) => {
+    th.addEventListener("click", () => {
+      const newSortKey = th.dataset.sort;
+      const newSortAsc = vendorSortKey === newSortKey ? !vendorSortAsc : false;
+      if (currentVendorSummary) {
+        displayVendorTable(currentVendorSummary, newSortKey, newSortAsc);
+      }
+    });
+  });
+
+  // Tech table sorting state
+  let techSortKey = "profiles";
+  let techSortAsc = false;
+  let currentTechSummary = null;
+
+  function displayTechSummary(
+    techSummary,
+    sortKey = techSortKey,
+    sortAsc = techSortAsc
+  ) {
+    currentTechSummary = techSummary;
+    techSortKey = sortKey;
+    techSortAsc = sortAsc;
+
+    const techTableBody = document.getElementById("techTableBody");
+    if (!techTableBody) return;
+
+    // Calculate metrics for each tech
+    const techsWithMetrics = Object.entries(techSummary).map(
+      ([tech, stats]) => {
+        // Success rate = (screened / profiles) * 100
+        const successRate =
+          stats.profiles > 0
+            ? Math.round((stats.screened / stats.profiles) * 100)
+            : 0;
+        const avgExp =
+          stats.expCount > 0
+            ? (stats.totalExp / stats.expCount).toFixed(1)
+            : "-";
+        return [tech, { ...stats, successRate, avgExp }];
+      }
     );
 
+    // Sort
+    const techs = techsWithMetrics.sort((a, b) => {
+      let valA, valB;
+      if (sortKey === "tech") {
+        valA = a[0].toLowerCase();
+        valB = b[0].toLowerCase();
+        return sortAsc ? valA.localeCompare(valB) : valB.localeCompare(valA);
+      } else if (sortKey === "profiles") {
+        valA = a[1].profiles;
+        valB = b[1].profiles;
+      } else if (sortKey === "offers") {
+        valA = a[1].offers;
+        valB = b[1].offers;
+      } else if (sortKey === "rate") {
+        valA = a[1].successRate;
+        valB = b[1].successRate;
+      } else {
+        valA = a[1].profiles;
+        valB = b[1].profiles;
+      }
+      return sortAsc ? valA - valB : valB - valA;
+    });
+
     if (techs.length === 0) {
-      elements.techSummary.innerHTML = `<div class="summary-item"><span class="summary-item-name">No data</span></div>`;
+      techTableBody.innerHTML = `<tr><td colspan="6" style="text-align: center; color: var(--text-muted);">No data</td></tr>`;
       return;
     }
 
-    elements.techSummary.innerHTML = techs
-      .map(
-        ([tech, stats]) => `
-      <div class="summary-item">
-        <span class="summary-item-name">${escapeHtml(tech)}</span>
-        <div class="summary-item-stats">
-          <span><span class="count">${stats.profiles}</span> profiles</span>
-          <span><span class="selected">${stats.selected}</span> selected</span>
-        </div>
-      </div>
-    `
-      )
+    // Update sort icons
+    document.querySelectorAll("#techTable th.sortable-tech").forEach((th) => {
+      const icon = th.querySelector(".sort-icon");
+      if (th.dataset.sort === sortKey) {
+        icon.textContent = sortAsc ? "↑" : "↓";
+        th.classList.add("sorted");
+      } else {
+        icon.textContent = "↕";
+        th.classList.remove("sorted");
+      }
+    });
+
+    function getRateClass(rate) {
+      if (rate >= 15) return "success";
+      if (rate >= 5) return "warning";
+      if (rate > 0) return "danger";
+      return "muted";
+    }
+
+    techTableBody.innerHTML = techs
+      .map(([tech, stats]) => {
+        const rateClass = getRateClass(stats.successRate);
+        return `
+        <tr>
+          <td><strong>${escapeHtml(tech)}</strong></td>
+          <td>${stats.profiles}</td>
+          <td>${stats.screened}</td>
+          <td><strong>${stats.offers}</strong></td>
+          <td><span class="stage-badge ${rateClass}">${
+          stats.successRate
+        }%</span></td>
+          <td>${stats.avgExp}${stats.avgExp !== "-" ? "Y" : ""}</td>
+        </tr>
+      `;
+      })
       .join("");
   }
 
-  function displayExpSummary(expSummary) {
-    const brackets = ["0-3 years", "3-5 years", "5-10 years", "10+ years"];
+  // Tech table sorting click handler
+  document.querySelectorAll("#techTable th.sortable-tech").forEach((th) => {
+    th.addEventListener("click", () => {
+      const newSortKey = th.dataset.sort;
+      const newSortAsc = techSortKey === newSortKey ? !techSortAsc : false;
+      if (currentTechSummary) {
+        displayTechSummary(currentTechSummary, newSortKey, newSortAsc);
+      }
+    });
+  });
 
-    elements.expSummary.innerHTML = brackets
-      .map(
-        (bracket) => `
-      <div class="summary-item">
-        <span class="summary-item-name">${bracket}</span>
-        <div class="summary-item-stats">
-          <span class="count">${expSummary[bracket] || 0}</span>
+  function displayExpSummary(expSummary) {
+    const expDistribution = document.getElementById("expDistribution");
+    if (!expDistribution) return;
+
+    const brackets = ["0-3 years", "3-5 years", "5-10 years", "10+ years"];
+    const colors = ["#3b82f6", "#10b981", "#f59e0b", "#8b5cf6"];
+
+    // Calculate total for percentages
+    let total = 0;
+    brackets.forEach((bracket) => {
+      const data = expSummary[bracket];
+      total += data ? data.count : 0;
+    });
+
+    if (total === 0) {
+      expDistribution.innerHTML = `<div style="text-align: center; color: var(--text-muted);">No data</div>`;
+      return;
+    }
+
+    expDistribution.innerHTML = brackets
+      .map((bracket, i) => {
+        const data = expSummary[bracket] || {
+          count: 0,
+          screened: 0,
+          offers: 0,
+        };
+        const percentage = Math.round((data.count / total) * 100);
+        const conversionRate =
+          data.count > 0 ? Math.round((data.offers / data.count) * 100) : 0;
+
+        return `
+        <div class="exp-bar-item">
+          <div class="exp-bar-header">
+            <span class="exp-label">${bracket}</span>
+            <span class="exp-stats">
+              <span class="exp-count">${data.count}</span>
+              <span class="exp-percentage">(${percentage}%)</span>
+            </span>
+          </div>
+          <div class="exp-bar-container">
+            <div class="exp-bar" style="width: ${percentage}%; background: ${colors[i]};"></div>
+          </div>
+          <div class="exp-bar-footer">
+            <span>Screened: ${data.screened}</span>
+            <span>Offers: ${data.offers}</span>
+            <span class="exp-conversion">Conv: ${conversionRate}%</span>
+          </div>
         </div>
-      </div>
-    `
-      )
+      `;
+      })
       .join("");
   }
 
@@ -640,12 +873,221 @@ document.addEventListener("DOMContentLoaded", () => {
         closeSettingsModal();
       if (elements.mappingModal.classList.contains("active"))
         closeMappingModal();
+      if (
+        document
+          .getElementById("pendingDetailModal")
+          ?.classList.contains("active")
+      )
+        closePendingModal();
     }
 
     if ((e.ctrlKey || e.metaKey) && e.key === "r") {
       e.preventDefault();
       if (CONFIG.isConfigured()) fetchAndDisplayData();
     }
+  });
+
+  // ========================================
+  // Pending Detail Modal
+  // ========================================
+
+  const pendingModal = document.getElementById("pendingDetailModal");
+  const pendingModalTitle = document.getElementById("pendingModalTitle");
+  const closePendingModalBtn = document.getElementById("closePendingModal");
+  const searchInput = document.getElementById("searchInput");
+  const filterTech = document.getElementById("filterTech");
+  const filterVendor = document.getElementById("filterVendor");
+  const filteredCount = document.getElementById("filteredCount");
+  const pendingGroupedView = document.getElementById("pendingGroupedView");
+
+  let currentPendingStage = null;
+  let currentPendingCandidates = [];
+
+  function openPendingModal(stage) {
+    if (!currentData || !currentHeaders) return;
+
+    currentPendingStage = stage;
+    const stageNames = {
+      rf: "Rapid Fire",
+      l1: "L1 Technical",
+      l2: "L2 Technical",
+      client: "Client Round",
+    };
+
+    pendingModalTitle.textContent = `${stageNames[stage]} - Pending Candidates`;
+
+    // Get pending candidates for this stage
+    const results = Analytics.calculate(currentData, currentHeaders);
+    const listKey = stage + "PendingList";
+    currentPendingCandidates = results[listKey] || [];
+
+    // Clear search
+    searchInput.value = "";
+
+    // Populate filters
+    populateFilters();
+
+    // Render candidates
+    renderPendingCandidates();
+
+    // Show modal
+    pendingModal.classList.add("active");
+    document.body.style.overflow = "hidden";
+  }
+
+  function closePendingModal() {
+    pendingModal.classList.remove("active");
+    document.body.style.overflow = "";
+    currentPendingStage = null;
+    currentPendingCandidates = [];
+  }
+
+  function populateFilters() {
+    // Get unique technologies
+    const techs = [
+      ...new Set(
+        currentPendingCandidates.map((c) => c.technology).filter(Boolean)
+      ),
+    ].sort();
+    filterTech.innerHTML = '<option value="">All Technologies</option>';
+    techs.forEach((tech) => {
+      filterTech.innerHTML += `<option value="${tech}">${tech}</option>`;
+    });
+
+    // Get unique vendors
+    const vendors = [
+      ...new Set(currentPendingCandidates.map((c) => c.vendor).filter(Boolean)),
+    ].sort();
+    filterVendor.innerHTML = '<option value="">All Vendors</option>';
+    vendors.forEach((vendor) => {
+      filterVendor.innerHTML += `<option value="${vendor}">${vendor}</option>`;
+    });
+  }
+
+  function renderPendingCandidates() {
+    const searchTerm = searchInput.value.toLowerCase().trim();
+    const techFilter = filterTech.value;
+    const vendorFilter = filterVendor.value;
+
+    // Filter candidates
+    let filtered = currentPendingCandidates;
+
+    // Search filter (name or vendor)
+    if (searchTerm) {
+      filtered = filtered.filter((c) => {
+        const name = (c.name || "").toLowerCase();
+        const vendor = (c.vendor || "").toLowerCase();
+        return name.includes(searchTerm) || vendor.includes(searchTerm);
+      });
+    }
+
+    if (techFilter) {
+      filtered = filtered.filter((c) => c.technology === techFilter);
+    }
+    if (vendorFilter) {
+      filtered = filtered.filter((c) => c.vendor === vendorFilter);
+    }
+
+    filteredCount.textContent = filtered.length;
+
+    if (filtered.length === 0) {
+      pendingGroupedView.innerHTML = `
+        <div class="empty-pending">
+          <p>No pending candidates found</p>
+        </div>
+      `;
+      return;
+    }
+
+    // Group by technology
+    const grouped = {};
+    filtered.forEach((c) => {
+      const tech = c.technology || "Unknown";
+      if (!grouped[tech]) grouped[tech] = [];
+      grouped[tech].push(c);
+    });
+
+    // Render grouped view
+    let html = "";
+    Object.entries(grouped)
+      .sort(([a], [b]) => a.localeCompare(b))
+      .forEach(([tech, candidates], index) => {
+        const groupId = `tech-group-${index}`;
+        html += `
+        <div class="pending-tech-group">
+          <div class="tech-group-header" onclick="toggleTechGroup('${groupId}')">
+            <span class="tech-group-toggle" id="${groupId}-toggle">▼</span>
+            <span class="tech-group-name">${tech}</span>
+            <span class="tech-count">(${candidates.length})</span>
+          </div>
+          <div class="tech-group-content" id="${groupId}">
+            <table class="pending-detail-table">
+              <thead>
+                <tr>
+                  <th>Name</th>
+                  <th>Experience</th>
+                  <th>Vendor</th>
+                  <th>Status</th>
+                </tr>
+              </thead>
+              <tbody>
+                ${candidates
+                  .map(
+                    (c) => `
+                  <tr>
+                    <td>${c.name || "-"}</td>
+                    <td>${c.experience || "-"}</td>
+                    <td>${c.vendor || "-"}</td>
+                    <td><span class="status-pending-badge">${
+                      c.status || "Pending"
+                    }</span></td>
+                  </tr>
+                `
+                  )
+                  .join("")}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      `;
+      });
+
+    pendingGroupedView.innerHTML = html;
+  }
+
+  // Event listeners for pending modal
+  closePendingModalBtn.addEventListener("click", closePendingModal);
+  pendingModal.addEventListener("click", (e) => {
+    if (e.target === pendingModal) closePendingModal();
+  });
+  searchInput.addEventListener("input", renderPendingCandidates);
+  filterTech.addEventListener("change", renderPendingCandidates);
+  filterVendor.addEventListener("change", renderPendingCandidates);
+
+  // Make funnel pending labels clickable
+  elements.rfPendingLabel.addEventListener("click", () =>
+    openPendingModal("rf")
+  );
+  elements.l1PendingLabel.addEventListener("click", () =>
+    openPendingModal("l1")
+  );
+  elements.l2PendingLabel.addEventListener("click", () =>
+    openPendingModal("l2")
+  );
+  elements.clientPendingLabel.addEventListener("click", () =>
+    openPendingModal("client")
+  );
+
+  // Add clickable styling to pending labels
+  [
+    elements.rfPendingLabel,
+    elements.l1PendingLabel,
+    elements.l2PendingLabel,
+    elements.clientPendingLabel,
+  ].forEach((el) => {
+    el.style.cursor = "pointer";
+    el.style.textDecoration = "underline";
+    el.title = "Click to view pending candidates";
   });
 
   // ========================================
@@ -663,3 +1105,17 @@ document.addEventListener("DOMContentLoaded", () => {
 
   init();
 });
+
+// Global function for collapsing tech groups
+function toggleTechGroup(groupId) {
+  const content = document.getElementById(groupId);
+  const toggle = document.getElementById(groupId + "-toggle");
+
+  if (content.classList.contains("collapsed")) {
+    content.classList.remove("collapsed");
+    toggle.textContent = "▼";
+  } else {
+    content.classList.add("collapsed");
+    toggle.textContent = "►";
+  }
+}
