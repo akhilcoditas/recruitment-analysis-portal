@@ -197,6 +197,34 @@
           </div>
         </div>
 
+        <!-- Date Range Filter -->
+        <div class="date-filter-bar hidden" id="dateFilterBar">
+          <div class="date-filter-content">
+            <span class="date-filter-label">📅 Filter by Date:</span>
+            <div class="date-inputs">
+              <div class="date-input-group">
+                <label for="startDate">From:</label>
+                <div class="date-input-wrapper">
+                  <input type="date" id="startDate" class="date-input" />
+                </div>
+              </div>
+              <div class="date-input-group">
+                <label for="endDate">To:</label>
+                <div class="date-input-wrapper">
+                  <input type="date" id="endDate" class="date-input" />
+                </div>
+              </div>
+              <button class="btn btn-small btn-primary" id="applyDateFilter">
+                Apply
+              </button>
+              <button class="btn btn-small" id="clearDateFilter">Clear</button>
+            </div>
+            <div class="date-filter-info">
+              <span id="dateFilterStatus"></span>
+            </div>
+          </div>
+        </div>
+
         <!-- Empty State -->
         <div class="empty-state" id="emptyState">
           <div class="empty-icon">
@@ -665,26 +693,36 @@
           <!-- Vendor Performance -->
           <section class="dashboard-section">
             <h2 class="section-title">👥 Vendor Performance</h2>
-            <div class="table-legend table-legend-top">
-              <span class="legend-title">Legend:</span>
-              <span class="legend-item">
-                <span class="legend-dot success"></span> Selected
-              </span>
-              <span class="legend-item">
-                <span class="legend-dot danger"></span> Rejected
-              </span>
-              <span class="legend-item">
-                <span class="legend-dot warning"></span> Pending
-              </span>
-              <span class="legend-item">
-                <span class="legend-dot hold"></span> On Hold
-              </span>
-              <span class="legend-item">
-                <span class="legend-dot info"></span> Rescheduled
-              </span>
-              <span class="legend-item">
-                <span class="legend-dot purple"></span> To Be Rescheduled
-              </span>
+            <div class="vendor-controls">
+              <div class="table-legend table-legend-inline">
+                <span class="legend-title">Legend:</span>
+                <span class="legend-item">
+                  <span class="legend-dot success"></span> Selected
+                </span>
+                <span class="legend-item">
+                  <span class="legend-dot danger"></span> Rejected
+                </span>
+                <span class="legend-item">
+                  <span class="legend-dot warning"></span> Pending
+                </span>
+                <span class="legend-item">
+                  <span class="legend-dot hold"></span> On Hold
+                </span>
+                <span class="legend-item">
+                  <span class="legend-dot info"></span> Rescheduled
+                </span>
+                <span class="legend-item">
+                  <span class="legend-dot purple"></span> To Be Rescheduled
+                </span>
+              </div>
+              <div class="vendor-search">
+                <input
+                  type="text"
+                  id="vendorSearchInput"
+                  class="filter-search"
+                  placeholder="🔍 Search vendor..."
+                />
+              </div>
             </div>
             <div class="table-container">
               <table class="data-table" id="vendorTable">

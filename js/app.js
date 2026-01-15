@@ -114,6 +114,16 @@ document.addEventListener("DOMContentLoaded", () => {
 
   let currentData = null;
   let currentHeaders = null;
+  let currentStartDate = null;
+  let currentEndDate = null;
+
+  // Date Filter Elements
+  const dateFilterBar = document.getElementById("dateFilterBar");
+  const startDateInput = document.getElementById("startDate");
+  const endDateInput = document.getElementById("endDate");
+  const applyDateFilterBtn = document.getElementById("applyDateFilter");
+  const clearDateFilterBtn = document.getElementById("clearDateFilter");
+  const dateFilterStatus = document.getElementById("dateFilterStatus");
 
   // ========================================
   // State Management
@@ -129,6 +139,7 @@ document.addEventListener("DOMContentLoaded", () => {
       case "empty":
         elements.emptyState.classList.add("active");
         elements.mapColumnsBtn.style.display = "none";
+        if (dateFilterBar) dateFilterBar.classList.add("hidden");
         break;
       case "loading":
         elements.loadingState.classList.add("active");
@@ -136,9 +147,11 @@ document.addEventListener("DOMContentLoaded", () => {
       case "dashboard":
         elements.dashboardContainer.classList.add("active");
         elements.mapColumnsBtn.style.display = "inline-flex";
+        if (dateFilterBar) dateFilterBar.classList.remove("hidden");
         break;
       case "error":
         elements.errorState.classList.add("active");
+        if (dateFilterBar) dateFilterBar.classList.add("hidden");
         break;
     }
   }
@@ -293,7 +306,15 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   function displayDashboard(data, headers) {
-    const analytics = Analytics.calculate(data, headers);
+    const analytics = Analytics.calculate(
+      data,
+      headers,
+      currentStartDate,
+      currentEndDate
+    );
+
+    // Update date filter status
+    updateDateFilterStatus(analytics.totalProfiles);
 
     // Overview metrics
     animateValue(elements.totalProfiles, analytics.totalProfiles);
@@ -431,6 +452,7 @@ document.addEventListener("DOMContentLoaded", () => {
   let vendorSortKey = "profiles";
   let vendorSortAsc = false;
   let currentVendorSummary = null;
+  const vendorSearchInput = document.getElementById("vendorSearchInput");
 
   function displayVendorTable(
     vendorSummary,
@@ -441,8 +463,13 @@ document.addEventListener("DOMContentLoaded", () => {
     vendorSortKey = sortKey;
     vendorSortAsc = sortAsc;
 
+    // Get search term
+    const searchTerm = vendorSearchInput
+      ? vendorSearchInput.value.toLowerCase().trim()
+      : "";
+
     // Calculate success rate for each vendor
-    const vendorsWithRate = Object.entries(vendorSummary).map(
+    let vendorsWithRate = Object.entries(vendorSummary).map(
       ([vendor, stats]) => {
         // Success rate = (screening selected / profiles) * 100
         const successRate =
@@ -452,6 +479,13 @@ document.addEventListener("DOMContentLoaded", () => {
         return [vendor, { ...stats, successRate }];
       }
     );
+
+    // Filter by search term
+    if (searchTerm) {
+      vendorsWithRate = vendorsWithRate.filter(([vendor]) =>
+        vendor.toLowerCase().includes(searchTerm)
+      );
+    }
 
     // Sort vendors
     const vendors = vendorsWithRate.sort((a, b) => {
@@ -605,6 +639,15 @@ document.addEventListener("DOMContentLoaded", () => {
       }
     });
   });
+
+  // Vendor search handler
+  if (vendorSearchInput) {
+    vendorSearchInput.addEventListener("input", () => {
+      if (currentVendorSummary) {
+        displayVendorTable(currentVendorSummary);
+      }
+    });
+  }
 
   // Tech table sorting state
   let techSortKey = "profiles";
@@ -917,7 +960,12 @@ document.addEventListener("DOMContentLoaded", () => {
     pendingModalTitle.textContent = `${stageNames[stage]} - Pending Candidates`;
 
     // Get pending candidates for this stage
-    const results = Analytics.calculate(currentData, currentHeaders);
+    const results = Analytics.calculate(
+      currentData,
+      currentHeaders,
+      currentStartDate,
+      currentEndDate
+    );
     const listKey = stage + "PendingList";
     currentPendingCandidates = results[listKey] || [];
 
@@ -1088,6 +1136,72 @@ document.addEventListener("DOMContentLoaded", () => {
     el.style.cursor = "pointer";
     el.style.textDecoration = "underline";
     el.title = "Click to view pending candidates";
+  });
+
+  // ========================================
+  // Date Filter Handlers
+  // ========================================
+
+  function updateDateFilterStatus(count) {
+    if (currentStartDate || currentEndDate) {
+      const startStr = currentStartDate
+        ? currentStartDate.toLocaleDateString()
+        : "Start";
+      const endStr = currentEndDate
+        ? currentEndDate.toLocaleDateString()
+        : "End";
+      dateFilterStatus.textContent = `Showing ${count} profiles (${startStr} - ${endStr})`;
+      dateFilterBar.classList.add("date-filter-active");
+    } else {
+      dateFilterStatus.textContent = `Showing all ${count} profiles`;
+      dateFilterBar.classList.remove("date-filter-active");
+    }
+  }
+
+  function applyDateFilter() {
+    const startVal = startDateInput.value;
+    const endVal = endDateInput.value;
+
+    // Parse dates properly to avoid timezone issues
+    if (startVal) {
+      const [year, month, day] = startVal.split("-").map(Number);
+      currentStartDate = new Date(year, month - 1, day, 0, 0, 0); // Start of day local time
+    } else {
+      currentStartDate = null;
+    }
+
+    if (endVal) {
+      const [year, month, day] = endVal.split("-").map(Number);
+      currentEndDate = new Date(year, month - 1, day, 23, 59, 59); // End of day local time
+    } else {
+      currentEndDate = null;
+    }
+
+    if (currentData && currentHeaders) {
+      displayDashboard(currentData, currentHeaders);
+    }
+  }
+
+  function clearDateFilter() {
+    startDateInput.value = "";
+    endDateInput.value = "";
+    currentStartDate = null;
+    currentEndDate = null;
+
+    if (currentData && currentHeaders) {
+      displayDashboard(currentData, currentHeaders);
+    }
+  }
+
+  applyDateFilterBtn.addEventListener("click", applyDateFilter);
+  clearDateFilterBtn.addEventListener("click", clearDateFilter);
+
+  // Also apply filter on Enter key in date inputs
+  startDateInput.addEventListener("keypress", (e) => {
+    if (e.key === "Enter") applyDateFilter();
+  });
+  endDateInput.addEventListener("keypress", (e) => {
+    if (e.key === "Enter") applyDateFilter();
   });
 
   // ========================================

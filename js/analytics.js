@@ -21,7 +21,9 @@
 const Analytics = {
   // Default column mappings (matching actual sheet structure)
   defaultMappings: {
+    date: "DATE",
     vendor: "VENDOR",
+    candidate: "CANDIDATE",
     technology: "TECHNOLOGY",
     experience: "YoE",
     screeningDone: "Screening Done",
@@ -33,6 +35,75 @@ const Analytics = {
     offerReleased: "Offer Released",
     onboarded: "Onboarded",
     rejectionType: "Rejection Type",
+  },
+
+  // Parse date string like "27th Oct. 2025" to Date object
+  parseDate(dateStr) {
+    if (!dateStr) return null;
+    const str = String(dateStr).trim();
+
+    // Handle format: "27th Oct. 2025" or "5th Dec. 2025"
+    const match = str.match(
+      /^(\d{1,2})(?:st|nd|rd|th)?\s+(\w+)\.?\s+(\d{4})$/i
+    );
+    if (match) {
+      const day = parseInt(match[1]);
+      const monthStr = match[2].toLowerCase();
+      const year = parseInt(match[3]);
+
+      const months = {
+        jan: 0,
+        january: 0,
+        feb: 1,
+        february: 1,
+        mar: 2,
+        march: 2,
+        apr: 3,
+        april: 3,
+        may: 4,
+        jun: 5,
+        june: 5,
+        jul: 6,
+        july: 6,
+        aug: 7,
+        august: 7,
+        sep: 8,
+        sept: 8,
+        september: 8,
+        oct: 9,
+        october: 9,
+        nov: 10,
+        november: 10,
+        dec: 11,
+        december: 11,
+      };
+
+      const month = months[monthStr];
+      if (month !== undefined) {
+        return new Date(year, month, day);
+      }
+    }
+
+    // Fallback: try native parsing
+    const parsed = new Date(str);
+    return isNaN(parsed.getTime()) ? null : parsed;
+  },
+
+  // Filter data by date range
+  filterByDateRange(data, startDate, endDate, mappings) {
+    if (!startDate && !endDate) return data;
+
+    return data.filter((row) => {
+      const dateStr = this.getValue(row, mappings.date);
+      const rowDate = this.parseDate(dateStr);
+
+      if (!rowDate) return true; // Include rows without valid dates
+
+      if (startDate && rowDate < startDate) return false;
+      if (endDate && rowDate > endDate) return false;
+
+      return true;
+    });
   },
 
   mappingStorageKey: "columnMappings",
@@ -388,12 +459,20 @@ const Analytics = {
   // Main Calculate Function
   // ========================================
 
-  calculate(data, headers) {
+  calculate(data, headers, startDate = null, endDate = null) {
     const mappings = this.getMappings();
+
+    // Filter by date range if provided
+    const filteredData = this.filterByDateRange(
+      data,
+      startDate,
+      endDate,
+      mappings
+    );
 
     const results = {
       // Overview
-      totalProfiles: data.length,
+      totalProfiles: filteredData.length,
       interviewsScheduled: 0,
       totalOffers: 0,
       totalOnboarded: 0,
@@ -472,7 +551,7 @@ const Analytics = {
       expSummary: {},
     };
 
-    data.forEach((row) => {
+    filteredData.forEach((row) => {
       // Skip completely empty rows
       const hasData = Object.values(row).some((v) => this.hasValue(v));
       if (!hasData) return;
