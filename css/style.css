@@ -1602,6 +1602,32 @@ th.sortable.sorted .sort-icon {
   border-color: var(--accent-primary);
 }
 
+.date-format-hint {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  cursor: help;
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+  padding: 0.25rem 0.5rem;
+  background: var(--bg-tertiary);
+  border-radius: var(--radius-sm);
+  margin-left: auto;
+}
+
+.date-format-hint:hover {
+  color: var(--text-secondary);
+}
+
+.date-format-hint code {
+  background: rgba(99, 102, 241, 0.15);
+  color: var(--accent-secondary);
+  padding: 0.1rem 0.4rem;
+  border-radius: 3px;
+  font-family: monospace;
+  font-size: 0.75rem;
+}
+
 .data-table {
   width: 100%;
   border-collapse: collapse;
